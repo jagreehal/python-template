@@ -1,6 +1,5 @@
-.PHONY: install lint format test type-check update-deps clean
+.PHONY: install lint format test type-check update-deps lock-deps clean
 
-# Use Python 3.11 explicitly
 PYTHON := python3.11
 VENV := .venv
 BIN := $(VENV)/bin
@@ -8,33 +7,39 @@ BIN := $(VENV)/bin
 install:
 	@if [ ! -d "$(VENV)" ]; then \
 		echo "Virtual environment not found, creating and installing dependencies..."; \
-		$(PYTHON) -m uv pip install -e ".[dev]"; \
-		echo "Dependencies installed using uv."; \
+		$(PYTHON) -m venv $(VENV); \
+		$(BIN)/pip install -r requirements.txt; \
+		echo "Dependencies installed."; \
 	else \
 		echo "Virtual environment already exists, skipping installation."; \
 	fi
 
 lint:
 	@echo "Running linter..."
-	@uv run ruff check .
+	@$(BIN)/ruff check .
 
 format:
 	@echo "Formatting code..."
-	@uv run ruff check --fix .
-	@uv run black .
+	@$(BIN)/ruff check --fix .
+	@$(BIN)/black .
 
 test:
 	@echo "Running tests..."
-	@uv run pytest
+	@$(BIN)/pytest
 
 type-check:
 	@echo "Running type checker..."
-	@uv run mypy .
+	@$(BIN)/mypy .
 
 update-deps:
-	@echo "Updating dependencies using uv..."
-	@uv pip install --upgrade -e ".[dev]"
-	@echo "Dependencies updated with uv."
+	@echo "Updating dependencies..."
+	@$(BIN)/pip install --upgrade -r requirements.txt
+	@echo "Dependencies updated."
+
+lock-deps:
+	@echo "Locking dependencies..."
+	@$(BIN)/pip freeze > requirements.txt
+	@echo "Dependencies locked in requirements.txt."
 
 clean:
 	@echo "Cleaning up virtual environment and cache..."
@@ -43,5 +48,4 @@ clean:
 	@find . -type f -name "*.py[co]" -delete
 	@echo "Cleaned up environment and cache files."
 
-# Default target
-all: install lint format test type-check update-deps
+all: install lint format test type-check
