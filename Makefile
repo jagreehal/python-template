@@ -7,12 +7,30 @@ BIN := $(VENV)/bin
 
 install:
 	@if [ ! -d "$(VENV)" ]; then \
-		echo "Virtual environment not found, creating and installing dependencies..."; \
-		$(PYTHON) -m uv pip install -e ".[dev]"; \
-		echo "Dependencies installed using uv."; \
+		echo "Virtual environment not found, creating..."; \
+		$(PYTHON) -m venv $(VENV); \
+		echo "Virtual environment created."; \
+		echo "Please activate the virtual environment before proceeding with installation:"; \
+		echo "  source $(VENV)/bin/activate"; \
 	else \
-		echo "Virtual environment already exists, skipping installation."; \
+		if [ -z "$$VIRTUAL_ENV" ]; then \
+			echo "Virtual environment exists but is not activated."; \
+			echo "Please activate the virtual environment first:"; \
+			echo "  source $(VENV)/bin/activate"; \
+			exit 1; \
+		fi; \
 	fi
+
+	# Check if uv is installed; if not, install it
+	@if [ ! -f "$(UV)" ]; then \
+		echo "uv not found, installing it..."; \
+		$(VENV)/bin/pip install uv; \
+	fi
+
+	# Install dependencies using uv
+	@echo "Installing dependencies using uv..."; \
+	$(UV) pip install -e ".[dev]"; \
+	echo "Dependencies installed."
 
 lint:
 	@echo "Running linter..."
